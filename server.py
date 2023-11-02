@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI , HTTPException
 import uvicorn
 from models.model import Model
 from db.db import User
@@ -14,17 +14,35 @@ User.metadata.create_all(engine)
 def home():
     return "Home"
 
+
 @app.get('/get')
 def get_items():
     items = session.query(User).all()
     return items
 
+
+@app.get('/get/{name}')
+def get_name(name : str):
+    res = session.query(User).filter(User.name == name).first()
+    if(res != None):
+        return res
+    else:
+        raise HTTPException(status_code=404 , detail='No such record exists')
+    
+
 @app.post('/create')
 def create(payload : Model ):
     user = User(name = payload.name, id = payload.id, password = payload.password)
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    res = session.query(User).filter(User.name == payload.name).first()
+    if(res == None):
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+    else:
+        raise HTTPException(status_code=409 , detail='Already exists')
+    
+
+
 
 
 if __name__ == "__main__":
