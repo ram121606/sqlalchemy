@@ -2,8 +2,7 @@ from fastapi import FastAPI , HTTPException
 import uvicorn
 from models.model import Model
 from db.db import User
-from db.db_con import engine
-from db.db_con import session
+from db.db_con import engine,session
 
 
 app = FastAPI()
@@ -32,7 +31,8 @@ def get_name(name : str):
 
 @app.post('/create')
 def create(payload : Model ):
-    user = User(name = payload.name, id = payload.id, password = payload.password)
+    # user = User(name = payload.name, id = payload.id, password = payload.password)
+    user = User(**payload.model_dump())
     res = session.query(User).filter(User.name == payload.name).first()
     if(res == None):
         session.add(user)
@@ -42,7 +42,16 @@ def create(payload : Model ):
         raise HTTPException(status_code=409 , detail='Already exists')
     
 
-
+@app.delete('/delete/{id}')
+def delete(id : int):
+    res = session.query(User).get(id)
+    if not res:
+        raise HTTPException(status_code=404 , detail="Id not found")
+    else:
+        session.delete(res)
+        session.commit()
+        return "Deleted Successfully"
+    
 
 
 if __name__ == "__main__":
