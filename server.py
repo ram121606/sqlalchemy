@@ -37,7 +37,6 @@ def create(payload : Model ):
     if(res == None):
         session.add(user)
         session.commit()
-        session.refresh(user)
     else:
         raise HTTPException(status_code=409 , detail='Already exists')
     
@@ -46,13 +45,21 @@ def create(payload : Model ):
 def delete(id : int):
     res = session.query(User).get(id)
     if not res:
-        raise HTTPException(status_code=404 , detail="Id not found")
+        raise HTTPException(status_code=404 , detail='Id not found')
     else:
         session.delete(res)
         session.commit()
         return "Deleted Successfully"
     
-
+@app.put('/update')
+def update(id: int , alternateName: str):
+    res = session.query(User).get(id)
+    if not res:
+        raise HTTPException(status_code=404 , detail='Id not found')
+    else:
+        res.name = alternateName
+        return "Updated Successfully"
+    
 
 if __name__ == "__main__":
     uvicorn.run('server:app' , port=6969 , reload=True)
